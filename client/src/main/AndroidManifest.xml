@@ -1,31 +1,31 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="net.kzxiv.notify.client">
-	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-	<application
-		android:allowBackup="true"
-		android:label="@string/app_name"
-		android:icon="@drawable/icon"
-		android:theme="@style/AppTheme">
-		<service
-			android:name=".NotificationService"
-			android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
-			<intent-filter>
-				<action android:name="android.service.notification.NotificationListenerService" />
-			</intent-filter>
-		</service>
+    <application
+        android:allowBackup="true"
+        android:label="@string/app_name"
+        android:icon="@drawable/icon"
+        android:theme="@style/AppTheme">
+        <service
+            android:name=".NotificationService"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
 
-		<service
-			android:name=".HttpTransportService"
-			android:exported="false" />
+        <service
+            android:name=".HttpTransportService"
+            android:exported="false" />
 
-		<activity android:name=".ConfigurationActivity">
-			<intent-filter>
-				<action android:name="android.intent.action.MAIN" />
-				<action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />
-				<category android:name="android.intent.category.DEFAULT" />
-				<category android:name="android.intent.category.LAUNCHER" />
-			</intent-filter>
-		</activity>
-	</application>
+        <activity android:name=".ConfigurationActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
 </manifest>
