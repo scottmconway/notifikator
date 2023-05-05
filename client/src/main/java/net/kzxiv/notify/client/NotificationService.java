@@ -13,6 +13,9 @@ import android.util.*;
 import org.json.*;
 import java.io.*;
 import java.nio.charset.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class NotificationService extends NotificationListenerService
 {
@@ -31,6 +34,15 @@ public class NotificationService extends NotificationListenerService
 
 	public void onNotificationPosted(StatusBarNotification sbn)
 	{
+		// Skip notifications from denied packages
+        // TODO make user-configurable
+		final Set<String> packageDenylist = new HashSet<String>(
+			Arrays.asList("org.fdroid.fdroid", "com.topjohnwu.magisk", "com.aurora.store", "com.android.messaging", "dev.ukanth.ufirewall", "com.android.packageinstaller"));
+		String packageName = sbn.getPackageName();
+		if (packageDenylist.contains(packageName)){
+			return;
+		}
+
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		Resources res = getResources();
 
@@ -69,7 +81,6 @@ public class NotificationService extends NotificationListenerService
 		final String endpointUsername = prefs.getString(res.getString(R.string.key_endpointuser), null);
 		final String endpointPassword = prefs.getString(res.getString(R.string.key_endpointpw), null);
 
-		String packageName = sbn.getPackageName();
 		Notification notification = sbn.getNotification();
 
 		Object[] payload;
@@ -81,6 +92,8 @@ public class NotificationService extends NotificationListenerService
 			payload = getPayloadAdtv(packageName, notification);
 		else if (res.getString(R.string.protocol_json).equals(protocol))
 			payload = getPayloadJson(packageName, notification);
+		else if (res.getString(R.string.protocol_gotify).equals(protocol))
+			payload = getPayloadGotify(packageName, notification);
 		else
 			payload = null;
 
@@ -93,6 +106,7 @@ public class NotificationService extends NotificationListenerService
 		Intent i = new Intent(this, HttpTransportService.class);
 		i.putExtra(HttpTransportService.EXTRA_URL, endpointUrl);
 		i.putExtra(HttpTransportService.EXTRA_AUTH, endpointAuth);
+		// TODO add support for custom headers
 		if (endpointAuth)
 		{
 			i.putExtra(HttpTransportService.EXTRA_USERNAME, endpointUsername);
@@ -274,4 +288,29 @@ public class NotificationService extends NotificationListenerService
 
 		return new Object[] { "application/json", result.toString().getBytes() };
 	}
+	private final Object[] getPayloadGotify(String packageName, Notification notification)
+	{
+		final String title = notification.extras.getString(Notification.EXTRA_TITLE);
+		final String message = notification.extras.getString(Notification.EXTRA_TEXT);
+
+		JSONObject result = new JSONObject();
+		try
+		{
+			 // TODO reformat so it looks like so in gotify:
+			 // "package name - notification" (or something)
+			 //
+			// notification title
+			// notification content
+			//
+			// TODO don't forget to changes spaces to tabs!
+			result.put("title", "Notifikator");
+			//result.put("package", packageName);
+			result.put("message", String.format("%s: %s\n%s", packageName, title, message));
+			result.put("priority", 5);	// TODO make configurable
+		}
+	catch (JSONException ex) {}
+
+		return new Object[] { "application/json", result.toString().getBytes() };
+	}
+
 }

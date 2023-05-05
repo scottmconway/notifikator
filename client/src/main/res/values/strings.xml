@@ -15,12 +15,14 @@
 	<string name="protocol_kodi_addon">kodi+addon</string>
 	<string name="protocol_adtv">de.cyberdream.androidtv.notifications</string>
 	<string name="protocol_json">json</string>
+	<string name="protocol_gotify">gotify</string>
 
 	<string-array name="protocols">
 		<item>Kodi</item>
 		<item>Kodi (Addon)</item>
 		<item>Notifications for Android TV</item>
 		<item>JSON</item>
+		<item>Gotify</item>
 	</string-array>
 
 	<string-array name="protocol_names">
@@ -28,6 +30,7 @@
 		<item>@string/protocol_kodi_addon</item>
 		<item>@string/protocol_adtv</item>
 		<item>@string/protocol_json</item>
+		<item>@string/protocol_gotify</item>
 	</string-array>
 
 	<string name="general">General</string>
