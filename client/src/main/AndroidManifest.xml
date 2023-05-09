@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="net.kzxiv.notify.client">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -9,7 +9,9 @@
         android:theme="@style/AppTheme">
         <service
             android:name=".NotificationService"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
@@ -19,7 +21,9 @@
             android:name=".HttpTransportService"
             android:exported="false" />
 
-        <activity android:name=".ConfigurationActivity">
+        <activity android:name=".ConfigurationActivity"
+                  android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />

@@ -3,12 +3,11 @@ apply plugin: 'com.android.application'
 android
 {
     compileSdkVersion 27
-    buildToolsVersion "28.0.3"
     defaultConfig
     {
         applicationId "net.kzxiv.notify.client"
         minSdkVersion 21
-        targetSdkVersion 21
+        targetSdkVersion 33
         versionCode 2
         versionName "1.1"
     }
@@ -16,4 +15,5 @@ android
     {
         abortOnError false
     }
+    namespace 'net.kzxiv.notify.client'
 }
