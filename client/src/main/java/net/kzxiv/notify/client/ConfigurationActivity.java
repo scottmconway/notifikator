@@ -19,6 +19,9 @@ public class ConfigurationActivity extends PreferenceActivity
 
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference)
     {
+        int NOTIFICATION_ID = 0;
+        String CHANNEL_ID = "notifikator";
+
         Resources res = getResources();
         if (res.getString(R.string.key_send).equals(preference.getKey()))
         {
@@ -33,7 +36,22 @@ public class ConfigurationActivity extends PreferenceActivity
             Bitmap largeIconBitmap = largeIconDrawable.getBitmap();
             nb.setLargeIcon(largeIconBitmap);
 
-            mgr.notify(0, nb.build());
+            // `VERSION_CODES.O` means SDK 26
+            // Thanks Google, very readable
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                // notification channel setup
+                NotificationChannel mChannel = null;
+                mChannel = new NotificationChannel(CHANNEL_ID, CHANNEL_ID, NotificationManager.IMPORTANCE_LOW);
+                mChannel.setDescription("");
+                mChannel.enableLights(true);
+                mChannel.setLightColor(Color.GREEN);
+                mChannel.enableVibration(false);
+                mgr.createNotificationChannel(mChannel);
+
+                nb.setChannelId(CHANNEL_ID);
+            }
+
+            mgr.notify(NOTIFICATION_ID, nb.build());
             return false;
         }
 
