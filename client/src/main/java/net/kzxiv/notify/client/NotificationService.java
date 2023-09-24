@@ -1,45 +1,55 @@
 package net.kzxiv.notify.client;
 
-import android.app.*;
-import android.content.*;
-import android.content.pm.*;
-import android.content.res.*;
-import android.graphics.*;
-import android.graphics.drawable.*;
-import android.net.*;
-import android.preference.*;
-import android.service.notification.*;
-import android.util.*;
-import org.json.*;
-import java.io.*;
-import java.nio.charset.*;
-import java.util.Arrays;
+import android.app.Notification;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
+import android.service.notification.NotificationListenerService;
+import android.service.notification.StatusBarNotification;
+import android.util.Log;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
 public class NotificationService extends NotificationListenerService
 {
+    private static final String TAG = AppConstants.TAG;
+
     public void onCreate()
     {
         super.onCreate();
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        Log.d("Notifikator", "Notification service created.");
+        Log.d(TAG, "Notification service created.");
     }
 
     public void onDestroy()
     {
-        Log.d("Notifikator", "Notification service destroyed.");
+        Log.d(TAG, "Notification service destroyed.");
         super.onDestroy();
     }
 
     public void onNotificationPosted(StatusBarNotification sbn)
     {
         // Skip notifications from denied packages
-        // TODO make user-configurable
-        final Set<String> packageDenylist = new HashSet<String>(
-            Arrays.asList("org.fdroid.fdroid", "com.topjohnwu.magisk", "com.aurora.store", "com.android.messaging", "dev.ukanth.ufirewall", "com.android.packageinstaller"));
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        final Set<String> packageDenylist = sharedPreferences.getStringSet(AppConstants.PACKAGE_DENY_LIST_PREF_KEY, new HashSet<>());
+
         String packageName = sbn.getPackageName();
         if (packageDenylist.contains(packageName)){
+            Log.d(TAG, String.format("blocked notification for package \"%s\"", packageName));
             return;
         }
 
@@ -50,7 +60,7 @@ public class NotificationService extends NotificationListenerService
 
         if (!enabled)
         {
-            Log.i("Notifikator", "Skipping notification because not enabled.");
+            Log.i(TAG, "Skipping notification because not enabled.");
             return;
         }
 
@@ -63,7 +73,7 @@ public class NotificationService extends NotificationListenerService
 
             if (ni == null || ni.getType() != ConnectivityManager.TYPE_WIFI)
             {
-                Log.i("Notifikator", "Skipping notification because not connected to wifi.");
+                Log.i(TAG, "Skipping notification because not connected to wifi.");
                 return;
             }
         }
@@ -73,7 +83,7 @@ public class NotificationService extends NotificationListenerService
 
         if (endpointUrl == null || "".equals(endpointUrl))
         {
-            Log.e("Notifikator", "No endpoint specified.");
+            Log.e(TAG, "No endpoint specified.");
             return;
         }
 
@@ -99,7 +109,7 @@ public class NotificationService extends NotificationListenerService
 
         if (payload == null)
         {
-            Log.e("Notifikator", String.format("No payload or unknown protocol \"%s\".", protocol));
+            Log.e(TAG, String.format("No payload or unknown protocol \"%s\".", protocol));
             return;
         }
 

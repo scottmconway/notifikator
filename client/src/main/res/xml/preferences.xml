@@ -12,6 +12,11 @@
             android:key="@string/key_wifionly"
             android:defaultValue="false" />
         <Preference
+            android:title="@string/choose_denylist"
+            android:summary="@string/choose_denylist_summary"
+            android:key="@string/key_choose_denylist"
+            android:id="@+id/chooseDenylistButton" />
+        <Preference
             android:title="@string/notification_access"
             android:summary="@string/notification_access_summary">
             <intent android:action="android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS" />

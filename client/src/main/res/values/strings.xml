@@ -10,6 +10,7 @@
     <string name="key_endpointuser">EndpointUsername</string>
     <string name="key_endpointpw">EndpointPassword</string>
     <string name="key_send">NotificationSend</string>
+    <string name="key_choose_denylist">ChooseDenylist</string>
 
     <string name="protocol_kodi">kodi</string>
     <string name="protocol_kodi_addon">kodi+addon</string>
@@ -38,6 +39,8 @@
     <string name="enabled_summary">Forward received notifications</string>
     <string name="wifionly">Wi-Fi Only</string>
     <string name="wifionly_summary">Only forward notifications when connected to Wi-Fi</string>
+    <string name="choose_denylist">Package Denylist File</string>
+    <string name="choose_denylist_summary">Select file to initialize package denylist</string>
     <string name="protocol">Protocol</string>
     <string name="protocol_summary">How to encode the notification data</string>
     <string name="notification_access">Open Notification Access</string>
