@@ -17,6 +17,7 @@
     <string name="protocol_adtv">de.cyberdream.androidtv.notifications</string>
     <string name="protocol_json">json</string>
     <string name="protocol_gotify">gotify</string>
+    <string name="protocol_ntfy">ntfy</string>
 
     <string-array name="protocols">
         <item>Kodi</item>
@@ -24,6 +25,7 @@
         <item>Notifications for Android TV</item>
         <item>JSON</item>
         <item>Gotify</item>
+        <item>ntfy</item>
     </string-array>
 
     <string-array name="protocol_names">
@@ -32,6 +34,7 @@
         <item>@string/protocol_adtv</item>
         <item>@string/protocol_json</item>
         <item>@string/protocol_gotify</item>
+        <item>@string/protocol_ntfy</item>
     </string-array>
 
     <string name="general">General</string>

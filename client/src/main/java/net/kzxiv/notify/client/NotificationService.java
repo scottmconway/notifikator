@@ -104,6 +104,8 @@ public class NotificationService extends NotificationListenerService
             payload = getPayloadJson(packageName, notification);
         else if (res.getString(R.string.protocol_gotify).equals(protocol))
             payload = getPayloadGotify(packageName, notification);
+        else if (res.getString(R.string.protocol_ntfy).equals(protocol))
+            payload = getPayloadNtfy(packageName, notification);
         else
             payload = null;
 
@@ -319,6 +321,14 @@ public class NotificationService extends NotificationListenerService
     catch (JSONException ex) {}
 
         return new Object[] { "application/json", result.toString().getBytes() };
+    }
+
+    private final Object[] getPayloadNtfy(String packageName, Notification notification)
+    {
+        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
+        final String message = notification.extras.getString(Notification.EXTRA_TEXT);
+
+        return new Object[] { "text/plain",  String.format("%s: %s\n%s", packageName, title, message).getBytes() };
     }
 
 }
