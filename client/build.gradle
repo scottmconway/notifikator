@@ -11,9 +11,9 @@ android
         versionCode 2
         versionName "1.1"
     }
-    lintOptions
+    lint
     {
-        abortOnError false
+        abortOnError = false
     }
-    namespace 'net.kzxiv.notify.client'
+    namespace = 'net.kzxiv.notify.client'
 }
