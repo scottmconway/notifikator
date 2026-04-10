@@ -24,6 +24,9 @@
             android:name=".HttpTransportService"
             android:exported="false" />
 
+        <activity android:name=".AppPickerActivity"
+                  android:exported="false" />
+
         <activity android:name=".ConfigurationActivity"
                   android:exported="true">
 

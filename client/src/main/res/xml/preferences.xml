@@ -12,6 +12,10 @@
             android:key="@string/key_wifionly"
             android:defaultValue="false" />
         <Preference
+            android:title="@string/manage_denylist"
+            android:summary="@string/manage_denylist_summary"
+            android:key="@string/key_manage_denylist" />
+        <Preference
             android:title="@string/choose_denylist"
             android:summary="@string/choose_denylist_summary"
             android:key="@string/key_choose_denylist"

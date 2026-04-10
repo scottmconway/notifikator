@@ -16,15 +16,7 @@ How to Use
 
 Package Denylist
 ---------
-In order to deny specific applications from having their notifications forwarded, first get a list of your packages. This is simply obtained from running `adb shell pm list packages`. Applications' package names are also shown under the application's settings in the system settings application.
-
-Format your package names in a text file with one package name per line. Remove the `package:` prefix if copy-pasting from the output of `pm list packages`. If generating this on a computer, `adb push` can be used to send this text file to your android device.
-
-Click `Package Denylist File` in the app and select your denylist file.
-
-Changes to the content of this file won't be automatically detected by the app - you must reload the file for any changes to take effect.
-
-The packages specified in the denylist need not be installed on the device - they simply won't do anything if the given package never sends a notification.
+To prevent specific applications from having their notifications forwarded, tap **Manage Package Denylist** in the app. This opens a searchable list of all installed applications with checkboxes - check an app to block its notifications from being forwarded.
 
 Protocols
 ---------

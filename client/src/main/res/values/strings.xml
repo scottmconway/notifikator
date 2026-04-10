@@ -44,6 +44,11 @@
     <string name="wifionly_summary">Only forward notifications when connected to Wi-Fi</string>
     <string name="choose_denylist">Package Denylist File</string>
     <string name="choose_denylist_summary">Select file to initialize package denylist</string>
+    <string name="manage_denylist">Manage Package Denylist</string>
+    <string name="manage_denylist_summary">Choose which apps to block from forwarding</string>
+    <string name="key_manage_denylist">ManageDenylist</string>
+    <string name="app_picker_title">Package Denylist</string>
+    <string name="search_apps_hint">Search apps…</string>
     <string name="protocol">Protocol</string>
     <string name="protocol_summary">How to encode the notification data</string>
     <string name="notification_access">Open Notification Access</string>

@@ -57,6 +57,15 @@ public class ConfigurationActivity extends PreferenceActivity
             }
         });
 
+        Preference manageDenylistButton = findPreference(getString(R.string.key_manage_denylist));
+        manageDenylistButton.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(Preference preference) {
+                startActivity(new Intent(ConfigurationActivity.this, AppPickerActivity.class));
+                return true;
+            }
+        });
+
     }
 
     private void openFilePickerForDenylist() {
