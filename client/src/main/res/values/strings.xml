@@ -4,37 +4,13 @@
 
     <string name="key_enabled">Enabled</string>
     <string name="key_wifionly">WifiOnly</string>
-    <string name="key_protocol">Protocol</string>
     <string name="key_endpointurl">EndpointURL</string>
     <string name="key_endpointauth">EndpointAuthenticate</string>
     <string name="key_endpointuser">EndpointUsername</string>
     <string name="key_endpointpw">EndpointPassword</string>
+    <string name="key_headers">Headers</string>
+    <string name="key_body_template">BodyTemplate</string>
     <string name="key_send">NotificationSend</string>
-
-    <string name="protocol_kodi">kodi</string>
-    <string name="protocol_kodi_addon">kodi+addon</string>
-    <string name="protocol_adtv">de.cyberdream.androidtv.notifications</string>
-    <string name="protocol_json">json</string>
-    <string name="protocol_gotify">gotify</string>
-    <string name="protocol_ntfy">ntfy</string>
-
-    <string-array name="protocols">
-        <item>Kodi</item>
-        <item>Kodi (Addon)</item>
-        <item>Notifications for Android TV</item>
-        <item>JSON</item>
-        <item>Gotify</item>
-        <item>ntfy</item>
-    </string-array>
-
-    <string-array name="protocol_names">
-        <item>@string/protocol_kodi</item>
-        <item>@string/protocol_kodi_addon</item>
-        <item>@string/protocol_adtv</item>
-        <item>@string/protocol_json</item>
-        <item>@string/protocol_gotify</item>
-        <item>@string/protocol_ntfy</item>
-    </string-array>
 
     <string name="general">General</string>
     <string name="enabled">Enabled</string>
@@ -46,8 +22,12 @@
     <string name="key_manage_denylist">ManageDenylist</string>
     <string name="app_picker_title">Package Denylist</string>
     <string name="search_apps_hint">Search apps…</string>
-    <string name="protocol">Protocol</string>
-    <string name="protocol_summary">How to encode the notification data</string>
+    <string name="headers">Headers</string>
+    <string name="headers_summary">Custom HTTP headers as JSON object, e.g. {\"X-Token\": \"abc\"}</string>
+    <string name="body_template">Body Template</string>
+    <string name="body_template_summary" formatted="false">JSON body with %placeholders%:\n%title%, %text%, %package%, %app%,\n%icon%, %badge%, %displaytime%</string>
+    <string name="default_headers">{}</string>
+    <string name="default_body_template" formatted="false">{\n  \"title\": \"%title%\",\n  \"package\": \"%package%\",\n  \"options\": {\n    \"body\": \"%text%\",\n    \"badge\": \"%badge%\",\n    \"icon\": \"%icon%\"\n  }\n}</string>
     <string name="notification_access">Open Notification Access</string>
     <string name="notification_access_summary">Give notification access to this application</string>
     <string name="endpoint">Endpoint</string>

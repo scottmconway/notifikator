@@ -23,13 +23,18 @@
             android:summary="@string/url_summary"
             android:inputType="textUri"
             android:defaultValue="http://htpc:8080/jsonrpc" />
-        <ListPreference
-            android:title="@string/protocol"
-            android:summary="@string/protocol_summary"
-            android:key="@string/key_protocol"
-            android:entries="@array/protocols"
-            android:entryValues="@array/protocol_names"
-            android:defaultValue="@string/protocol_kodi" />
+        <EditTextPreference
+            android:title="@string/body_template"
+            android:summary="@string/body_template_summary"
+            android:key="@string/key_body_template"
+            android:inputType="textMultiLine"
+            android:defaultValue="@string/default_body_template" />
+        <EditTextPreference
+            android:title="@string/headers"
+            android:summary="@string/headers_summary"
+            android:key="@string/key_headers"
+            android:inputType="textMultiLine"
+            android:defaultValue="@string/default_headers" />
         <CheckBoxPreference
             android:title="@string/enable_auth"
             android:summary="@string/enable_auth_summary"

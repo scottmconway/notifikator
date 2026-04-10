@@ -5,6 +5,8 @@ import android.content.*;
 import android.util.*;
 import java.io.*;
 import java.net.*;
+import java.util.Iterator;
+import org.json.JSONObject;
 
 public class HttpTransportService extends IntentService
 {
@@ -14,6 +16,7 @@ public class HttpTransportService extends IntentService
     public final static String EXTRA_PASSWORD = "net.kzxiv.notifikator.client.http.PASSWORD";
     public final static String EXTRA_PAYLOAD_TYPE = "net.kzxiv.notifikator.client.http.PAYLOAD_TYPE";
     public final static String EXTRA_PAYLOAD = "net.kzxiv.notifikator.client.http.PAYLOAD";
+    public final static String EXTRA_HEADERS = "net.kzxiv.notifikator.client.http.HEADERS";
 
     public HttpTransportService()
     {
@@ -28,6 +31,7 @@ public class HttpTransportService extends IntentService
         final String endpointPassword = intent.getStringExtra(EXTRA_PASSWORD);
         final String contentType = intent.getStringExtra(EXTRA_PAYLOAD_TYPE);
         final byte[] postData = intent.getByteArrayExtra(EXTRA_PAYLOAD);
+        final String headersJson = intent.getStringExtra(EXTRA_HEADERS);
 
         try
         {
@@ -44,6 +48,24 @@ public class HttpTransportService extends IntentService
                         Base64.encodeToString(
                             String.format("%s:%s", endpointUsername, endpointPassword).getBytes(),
                             Base64.NO_WRAP)));
+            }
+
+            if (headersJson != null && !headersJson.isEmpty())
+            {
+                try
+                {
+                    JSONObject headers = new JSONObject(headersJson);
+                    Iterator<String> keys = headers.keys();
+                    while (keys.hasNext())
+                    {
+                        String key = keys.next();
+                        connection.setRequestProperty(key, headers.getString(key));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Log.w("Notifikator", String.format("Failed to parse custom headers: %s", e.toString()));
+                }
             }
 
             connection.setConnectTimeout(2500);
