@@ -9,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Icon;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
@@ -16,11 +18,8 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -43,7 +42,6 @@ public class NotificationService extends NotificationListenerService
 
     public void onNotificationPosted(StatusBarNotification sbn)
     {
-        // Skip notifications from denied packages
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         final Set<String> packageDenylist = sharedPreferences.getStringSet(AppConstants.PACKAGE_DENY_LIST_PREF_KEY, new HashSet<>());
 
@@ -78,7 +76,6 @@ public class NotificationService extends NotificationListenerService
             }
         }
 
-        final String protocol = prefs.getString(res.getString(R.string.key_protocol), null);
         final String endpointUrl = prefs.getString(res.getString(R.string.key_endpointurl), null);
 
         if (endpointUrl == null || "".equals(endpointUrl))
@@ -90,43 +87,33 @@ public class NotificationService extends NotificationListenerService
         final boolean endpointAuth = prefs.getBoolean(res.getString(R.string.key_endpointauth), false);
         final String endpointUsername = prefs.getString(res.getString(R.string.key_endpointuser), null);
         final String endpointPassword = prefs.getString(res.getString(R.string.key_endpointpw), null);
+        final String bodyTemplate = prefs.getString(res.getString(R.string.key_body_template),
+                res.getString(R.string.default_body_template));
+        final String headersJson = prefs.getString(res.getString(R.string.key_headers),
+                res.getString(R.string.default_headers));
 
         Notification notification = sbn.getNotification();
 
-        Object[] payload;
-        if (res.getString(R.string.protocol_kodi).equals(protocol))
-            payload = getPayloadKodi(packageName, notification);
-        else if (res.getString(R.string.protocol_kodi_addon).equals(protocol))
-            payload = getPayloadKodiAddon(packageName, notification);
-        else if (res.getString(R.string.protocol_adtv).equals(protocol))
-            payload = getPayloadAdtv(packageName, notification);
-        else if (res.getString(R.string.protocol_json).equals(protocol))
-            payload = getPayloadJson(packageName, notification);
-        else if (res.getString(R.string.protocol_gotify).equals(protocol))
-            payload = getPayloadGotify(packageName, notification);
-        else if (res.getString(R.string.protocol_ntfy).equals(protocol))
-            payload = getPayloadNtfy(packageName, notification);
-        else
-            payload = null;
+        String[] substituted = applyPlaceholders(packageName, notification, bodyTemplate, headersJson);
 
-        if (payload == null)
+        if (substituted == null)
         {
-            Log.e(TAG, String.format("No payload or unknown protocol \"%s\".", protocol));
+            Log.e(TAG, "Failed to build payload from template.");
             return;
         }
 
         Intent i = new Intent(this, HttpTransportService.class);
         i.putExtra(HttpTransportService.EXTRA_URL, endpointUrl);
         i.putExtra(HttpTransportService.EXTRA_AUTH, endpointAuth);
-        // TODO add support for custom headers
+        i.putExtra(HttpTransportService.EXTRA_HEADERS, substituted[1]);
         if (endpointAuth)
         {
             i.putExtra(HttpTransportService.EXTRA_USERNAME, endpointUsername);
             i.putExtra(HttpTransportService.EXTRA_PASSWORD, endpointPassword);
         }
 
-        i.putExtra(HttpTransportService.EXTRA_PAYLOAD_TYPE, (String)payload[0]);
-        i.putExtra(HttpTransportService.EXTRA_PAYLOAD, (byte[])payload[1]);
+        i.putExtra(HttpTransportService.EXTRA_PAYLOAD_TYPE, "application/json");
+        i.putExtra(HttpTransportService.EXTRA_PAYLOAD, substituted[0].getBytes());
 
         startService(i);
     }
@@ -135,200 +122,96 @@ public class NotificationService extends NotificationListenerService
     {
     }
 
-    private final String getApplicationName(String packageName)
+    /**
+     * Substitutes %placeholders% in both body template and headers.
+     * Returns {body, headers} with placeholders replaced, or null if notification data is missing.
+     */
+    private String[] applyPlaceholders(String packageName, Notification notification,
+                                       String bodyTemplate, String headersTemplate)
     {
-        String app = packageName;
+        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
+        final String text = notification.extras.getString(Notification.EXTRA_TEXT);
+
+        if (title == null || text == null)
+            return null;
+
+        final String app = getApplicationName(packageName);
+        final Bitmap iconLg = getLargeIcon(notification);
+        final Bitmap iconSm = BitmapHelper.getPackageIcon(this, packageName,
+                notification.extras.getInt(Notification.EXTRA_SMALL_ICON));
+
+        final String iconUri = iconLg != null
+                ? BitmapHelper.getDataUri(BitmapHelper.ensureSize(iconLg, 192, 192)) : "";
+        final String badgeUri = iconSm != null
+                ? BitmapHelper.getDataUri(BitmapHelper.ensureSize(iconSm, 72, 72)) : "";
+        final int displayTime = determineDisplayTime(title, text);
+
+        String body = substituteAll(bodyTemplate, title, text, packageName, app, iconUri, badgeUri, displayTime);
+        String headers = substituteAll(headersTemplate, title, text, packageName, app, iconUri, badgeUri, displayTime);
+
+        return new String[] { body, headers };
+    }
+
+    private static String substituteAll(String template, String title, String text,
+                                        String packageName, String app, String iconUri,
+                                        String badgeUri, int displayTime)
+    {
+        return template
+                .replace("%title%", escapeJson(title))
+                .replace("%text%", escapeJson(text))
+                .replace("%package%", escapeJson(packageName))
+                .replace("%app%", escapeJson(app))
+                .replace("%icon%", escapeJson(iconUri))
+                .replace("%badge%", escapeJson(badgeUri))
+                .replace("%displaytime%", Integer.toString(displayTime));
+    }
+
+    private static String escapeJson(String value)
+    {
+        // Android's JSONObject.quote() escapes '/' as '\/' which corrupts base64 data.
+        // Un-escape forward slashes since they don't require escaping in JSON (RFC 8259).
+        String quoted = JSONObject.quote(value);
+        return quoted.substring(1, quoted.length() - 1).replace("\\/", "/");
+    }
+
+    private Bitmap getLargeIcon(Notification notification)
+    {
+        // On API 23+, EXTRA_LARGE_ICON can be an Icon instead of a Bitmap
+        Object raw = notification.extras.get(Notification.EXTRA_LARGE_ICON);
+        if (raw instanceof Bitmap)
+            return (Bitmap) raw;
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M)
+        {
+            Icon icon = notification.getLargeIcon();
+            if (icon != null)
+            {
+                Drawable drawable = icon.loadDrawable(this);
+                if (drawable instanceof BitmapDrawable)
+                    return ((BitmapDrawable) drawable).getBitmap();
+            }
+        }
+
+        return null;
+    }
+
+    private String getApplicationName(String packageName)
+    {
         PackageManager pkg = getPackageManager();
-        ApplicationInfo info;
         try
         {
-            info = pkg.getApplicationInfo(packageName, 0);
+            ApplicationInfo info = pkg.getApplicationInfo(packageName, 0);
+            return pkg.getApplicationLabel(info).toString();
         }
         catch (PackageManager.NameNotFoundException ex)
         {
             return packageName;
         }
-
-        return pkg.getApplicationLabel(info).toString();
     }
 
-    private final static int determineDisplayTime(String title, String text)
+    private static int determineDisplayTime(String title, String text)
     {
         final int rawTime = ((title.length() + text.length()) * 1000) / 5;
         return Math.max(5000, rawTime);
     }
-
-    private final Object[] getPayloadKodi(String packageName, Notification notification)
-    {
-        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
-        final String text = notification.extras.getString(Notification.EXTRA_TEXT);
-
-        if (title == null || text == null)
-            return null;
-
-        JSONObject result = new JSONObject();
-        try
-        {
-            result.put("jsonrpc", "2.0");
-            result.put("method", "GUI.ShowNotification");
-            result.put("id", 0);
-
-            JSONObject parameters = new JSONObject();
-            parameters.put("title", title);
-            parameters.put("message", text);
-            parameters.put("displaytime", determineDisplayTime(title, text));
-
-            result.put("params", parameters);
-        }
-        catch (JSONException ex) {}
-
-        return new Object[] { "application/json", result.toString().getBytes() };
-    }
-
-    private final Object[] getPayloadKodiAddon(String packageName, Notification notification)
-    {
-        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
-        final String text = notification.extras.getString(Notification.EXTRA_TEXT);
-
-        if (title == null || text == null)
-            return null;
-
-        final Bitmap icon = (Bitmap)notification.extras.get(Notification.EXTRA_LARGE_ICON);
-
-        JSONObject result = new JSONObject();
-        try
-        {
-            result.put("jsonrpc", "2.0");
-            result.put("method", "Addons.ExecuteAddon");
-            result.put("id", 0);
-
-            JSONObject parameters0 = new JSONObject();
-            parameters0.put("addonid", "script.notifikator");
-
-            JSONObject parameters1 = new JSONObject();
-            parameters1.put("title", title);
-            parameters1.put("message", text);
-            parameters1.put("image", icon == null ? "" : BitmapHelper.getBase64(BitmapHelper.ensureSize(icon, 75, 75)));
-            parameters1.put("displaytime", Integer.toString(determineDisplayTime(title, text)));
-
-            parameters0.put("params", parameters1);
-            result.put("params", parameters0);
-        }
-        catch (JSONException ex) {}
-
-        return new Object[] { "application/json", result.toString().getBytes() };
-    }
-
-    private final Object[] getPayloadAdtv(String packageName, Notification notification)
-    {
-        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
-        final String text = notification.extras.getString(Notification.EXTRA_TEXT);
-        final String app = getApplicationName(packageName);
-
-        if (title == null || text == null)
-            return null;
-
-        Bitmap icon = (Bitmap)notification.extras.get(Notification.EXTRA_LARGE_ICON);
-
-        if (icon == null)
-            icon = ((BitmapDrawable) getResources().getDrawable(R.drawable.icon)).getBitmap();
-
-        final Integer zero = Integer.valueOf(0);
-        final Object[] body = new Object[]
-        {
-            "type", zero,
-            "title", title,
-            "msg", text,
-            "duration", Integer.valueOf(determineDisplayTime(title, text) / 1000),
-            "fontsize", zero,
-            "position", zero,
-            "width", zero,
-            "bkgcolor", "#000000",
-            "transparency", zero,
-            "offset", zero,
-            "offsety", zero,
-            "app", app,
-            "force", Boolean.valueOf(true),
-            "filename", BitmapHelper.getBytes(icon)
-        };
-
-        final String separator = HttpHelper.generateMultipartSeparator();
-        final Charset charset = Charset.forName("UTF-8");
-
-        byte[] result;
-        try
-        {
-            result = HttpHelper.generateMultipartBody(separator, body, charset);
-        }
-        catch (IOException ex)
-        {
-            return null;
-        }
-
-        return new Object[] { "multipart/form-data; boundary=" + separator, result };
-    }
-
-    private final Object[] getPayloadJson(String packageName, Notification notification)
-    {
-        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
-        final String text = notification.extras.getString(Notification.EXTRA_TEXT);
-        final Bitmap iconSm = BitmapHelper.getPackageIcon(this, packageName, notification.extras.getInt(Notification.EXTRA_SMALL_ICON));
-        final Bitmap iconLg = (Bitmap)notification.extras.get(Notification.EXTRA_LARGE_ICON);
-
-        JSONObject result = new JSONObject();
-        try
-        {
-            if (title != null)
-                result.put("title", title);
-            if (packageName != null)
-                result.put("package", packageName);
-            if (text != null || iconSm != null || iconLg != null)
-            {
-                JSONObject options = new JSONObject();
-
-                if (text != null)
-                    options.put("body", text);
-                if (iconSm != null)
-                    options.put("badge", BitmapHelper.getDataUri(BitmapHelper.ensureSize(iconSm, 72, 72)));
-                if (iconLg != null)
-                    options.put("icon", BitmapHelper.getDataUri(BitmapHelper.ensureSize(iconLg, 192, 192)));
-
-                result.put("options", options);
-            }
-        }
-        catch (JSONException ex) {}
-
-        return new Object[] { "application/json", result.toString().getBytes() };
-    }
-    private final Object[] getPayloadGotify(String packageName, Notification notification)
-    {
-        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
-        final String message = notification.extras.getString(Notification.EXTRA_TEXT);
-
-        JSONObject result = new JSONObject();
-        try
-        {
-             // TODO reformat so it looks like so in gotify:
-             // "package name - notification" (or something)
-             //
-            // notification title
-            // notification content
-            result.put("title", "Notifikator");
-            //result.put("package", packageName);
-            result.put("message", String.format("%s: %s\n%s", packageName, title, message));
-            result.put("priority", 5);    // TODO make configurable
-        }
-    catch (JSONException ex) {}
-
-        return new Object[] { "application/json", result.toString().getBytes() };
-    }
-
-    private final Object[] getPayloadNtfy(String packageName, Notification notification)
-    {
-        final String title = notification.extras.getString(Notification.EXTRA_TITLE);
-        final String message = notification.extras.getString(Notification.EXTRA_TEXT);
-
-        return new Object[] { "text/plain",  String.format("%s: %s\n%s", packageName, title, message).getBytes() };
-    }
-
 }
