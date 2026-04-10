@@ -63,6 +63,7 @@
     <string name="send_notification">Send Notification</string>
     <string name="send_notification_summary">Send a test notification</string>
 
+    <string name="notification_access_required">Notification access is required for Notifikator to function</string>
     <string name="notification_title">Test Notification</string>
-    <string name="notification_text">This is some dummy text. ÀàÉéÏïÔôß 💩🤮</string>
+    <string name="notification_text">Test notifcation from Notifikator</string>
 </resources>

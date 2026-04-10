@@ -7,6 +7,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.pm.PackageManager;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -18,6 +19,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.provider.Settings;
 import android.widget.Toast;
 
 public class ConfigurationActivity extends PreferenceActivity
@@ -33,6 +35,11 @@ public class ConfigurationActivity extends PreferenceActivity
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
             }
+        }
+
+        if (!isNotificationListenerEnabled()) {
+            Toast.makeText(this, R.string.notification_access_required, Toast.LENGTH_LONG).show();
+            startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
         }
 
         Preference manageDenylistButton = findPreference(getString(R.string.key_manage_denylist));
@@ -84,5 +91,14 @@ public class ConfigurationActivity extends PreferenceActivity
         }
 
         return super.onPreferenceTreeClick(preferenceScreen, preference);
+    }
+
+    private boolean isNotificationListenerEnabled()
+    {
+        String flat = Settings.Secure.getString(getContentResolver(), "enabled_notification_listeners");
+        if (flat == null)
+            return false;
+        ComponentName component = new ComponentName(this, NotificationService.class);
+        return flat.contains(component.flattenToString());
     }
 }
