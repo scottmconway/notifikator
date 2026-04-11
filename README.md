@@ -1,16 +1,14 @@
 Notifikator
 ===========
 
-This is an Android application that catches every notification and forwards them to an HTTP endpoint.
-
-It natively supports talking to the [Kodi](https://kodi.tv/) JSON-RPC interface, [Notifications for Android TV](https://play.google.com/store/apps/details?id=de.cyberdream.androidtv.notifications.google), [Gotify](https://gotify.net/), as well as sending plain JSON.
+This is an Android application that catches every notification and forwards them to an HTTP endpoint. It uses a freeform editor, and allows you to template fields in a JSON body for notification servers such as [ntfy](https://ntfy.sh).
 
 How to Use
 ----------
 
 1. Install the application.
 2. Enable notification access (a shortcut is provided within).
-3. Configure the HTTP endpoint, protocol and authentication if necessary (see next section).
+3. Configure the HTTP endpoint, body format, and authentication if necessary (see next section).
 4. *(Optional)* Configure the package denylist to silence noisy packages
 5. *(Optional)* Send a test notification.
 
@@ -18,52 +16,23 @@ Package Denylist
 ---------
 To prevent specific applications from having their notifications forwarded, tap **Manage Package Denylist** in the app. This opens a searchable list of all installed applications with checkboxes - check an app to block its notifications from being forwarded.
 
-Protocols
+Freeform Body Editor
 ---------
+The following fields can be used as placeholders to communicate notification info, wrapped by percent signs:
+* title - notification title
+* text - notification text
+* package - the package path of the notifying application (eg. net.kzxiv.notify.client)
+* app - the name of the application (eg. Notifickator)
+* badge - a base64-encoded badge icon included in the notification
+* displaytime - the length of time in ms that the notification is displayed for
+* icon - a base64-encoded image icon included in the notification
 
-### Kodi
+Placeholders may be used in JSON values for the body or header fields.
 
-This protocol sends a call to show a notification through the Kodi JSON-RPC interface.
-
-In order for this to work, the "Allow remote control via HTTP" setting must be turned on in Settings -> Services -> Control in Kodi.
-
-The endpoint URL should look like `http://hostname:8080/jsonrpc`, and authentication should be enabled and matching the username and password configured in Kodi.
-
-### Kodi with Addon
-
-This is a variant on the Kodi protocol. Sadly, the `GUI.ShowNotification` call takes URLs for images, and will not accept `data:` URIs, therefore the notification icon can not be sent that way.
-
-This variant requires you to install the `script.notifikator.zip` addon, which will save the received image as a temporary file, and then show the notification.
-
-Otherwise, the endpoint configuration should be the same as with the Kodi protocol.
-
-**Privacy issue:** Every received notification icon will stay stored in `~/.kodi/temp/notifikator` forever. This may include profile pictures or other private images.
-
-### Notifications for Android TV
-
-This protocol forwards the notification to the server part of the [Notifications for Android TV](https://play.google.com/store/apps/details?id=de.cyberdream.androidtv.notifications.google) application. No customization options are available, unlike in the real application.
-
-The endpoint URL should look like `http://hostname:7676/`, and authentication should not be enabled.
-
-### Gotify
-
-This protocol simply POSTs a formatted JSON to the supplied URL. It expects a Gotify server's URL in this format: `https://gotify.example.com/message?token=$APP_TOKEN`. As of now, the `title` parameter is hard-coded to `Notifikator`, and `priority` to `5`.
-
-### JSON
-
-This protocol will simply `POST` a JSON containing the notification title, text, small and large icons to an arbitrary endpoint. This is designed for people who want to write their own server code to handle it.
-
-The JSON format is intentionally similar to the parameters of the [`ServiceWorkerRegistration.showNotification`](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification) API, so in theory the contents could be used as-is. In practice, the combined size of the text and icon image data will likely exceed the maximum WebPush size and not go through.
-
-Here is an example JSON, note that any of the fields not present in the original notification will not be present in the JSON. Additionally, an empty `options` object will be omitted.
-
-```json
-{
-    "title": "Notification Title",
-    "options": {
-        "body": "Notification text.",
-        "badge": "data:image/png;base64,...",
-        "icon": "data:image/png;base64,..."
-    }
+For example, for [ntfy.sh](https://ntfy.sh):
+```json{
+    "topic": "notifikator",
+    "message": "%text%",
+    "title": "Notification - %app%"
 }
 ```
